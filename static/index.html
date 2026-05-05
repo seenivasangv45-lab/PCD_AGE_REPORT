@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly Report Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e17;
+  --surface: #111827;
+  --surface-2: #1a2332;
+  --surface-3: #243044;
+  --border: #2a3548;
+  --text: #e8edf5;
+  --text-dim: #8899aa;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  --green: #10b981;
+  --green-dim: rgba(16, 185, 129, 0.15);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245, 158, 11, 0.15);
+  --red: #ef4444;
+  --red-dim: rgba(239, 68, 68, 0.15);
+  --purple: #8b5cf6;
+  --purple-dim: rgba(139, 92, 246, 0.15);
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6, 182, 212, 0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.bg-mesh {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 600px 400px at 10% 20%, rgba(59,130,246,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 400px 300px at 50% 50%, rgba(16,185,129,0.03) 0%, transparent 70%);
+}
+
+/* Navbar */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.navbar-brand {
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 700; font-size: 18px;
+}
+.navbar-brand .icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.navbar-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-dim);
+}
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+}
+
+.main-container {
+  position: relative; z-index: 1;
+  max-width: 1400px; margin: 0 auto; padding: 32px;
+}
+
+/* Animations */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cardPop {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes shimmer { to { left: 100%; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes checkPop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Hero */
+.hero-text { text-align: center; margin-bottom: 40px; animation: fadeSlideUp 0.6s ease-out; }
+.hero-text h1 {
+  font-size: 36px; font-weight: 700;
+  background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+.hero-text p { color: var(--text-dim); font-size: 16px; }
+
+/* Steps indicator */
+.steps-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-bottom: 36px;
+  animation: fadeSlideUp 0.6s ease-out 0.1s both;
+}
+.step-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 500; color: var(--text-dim);
+  transition: all 0.3s;
+}
+.step-item .step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--surface-2); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  transition: all 0.3s;
+}
+.step-item.active .step-num {
+  background: var(--accent); border-color: var(--accent); color: white;
+}
+.step-item.done .step-num {
+  background: var(--green); border-color: var(--green); color: white;
+}
+.step-item.active { color: var(--text); }
+.step-item.done { color: var(--green); }
+.step-connector {
+  width: 40px; height: 2px; background: var(--border);
+  transition: background 0.3s;
+}
+.step-connector.done { background: var(--green); }
+
+/* Card */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px;
+  box-shadow: var(--shadow); transition: border-color 0.3s;
+}
+
+/* Upload Grid — Two side-by-side zones */
+.upload-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+  margin-bottom: 24px;
+  animation: fadeSlideUp 0.5s ease-out 0.15s both;
+}
+@media (max-width: 768px) { .upload-grid { grid-template-columns: 1fr; } }
+
+.upload-box {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative; overflow: hidden;
+  min-height: 200px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.upload-box::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, var(--accent-glow) 0%, transparent 70%);
+  opacity: 0; transition: opacity 0.3s;
+}
+.upload-box:hover::before, .upload-box.drag-over::before { opacity: 1; }
+.upload-box:hover, .upload-box.drag-over {
+  border-color: var(--accent); transform: scale(1.01);
+}
+.upload-box.pcd { border-color: var(--border); }
+.upload-box.age { border-color: var(--border); }
+.upload-box.pcd:hover, .upload-box.pcd.drag-over { border-color: var(--accent); }
+.upload-box.age:hover, .upload-box.age.drag-over { border-color: var(--cyan); }
+.upload-box.age::before {
+  background: radial-gradient(circle at 50% 50%, var(--cyan-dim) 0%, transparent 70%);
+}
+
+.upload-box .box-icon {
+  width: 56px; height: 56px; margin-bottom: 14px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 24px; position: relative; z-index: 1;
+  transition: transform 0.3s;
+}
+.upload-box:hover .box-icon { transform: translateY(-3px); }
+.upload-box.pcd .box-icon { background: rgba(59,130,246,0.12); }
+.upload-box.age .box-icon { background: var(--cyan-dim); }
+
+.upload-box .box-label {
+  font-size: 15px; font-weight: 600; margin-bottom: 4px;
+  position: relative; z-index: 1;
+}
+.upload-box .box-hint {
+  font-size: 12px; color: var(--text-dim);
+  position: relative; z-index: 1;
+}
+.upload-box input { display: none; }
+
+/* Uploaded file pill — shown inside the upload box */
+.upload-box.uploaded {
+  border-style: solid;
+  cursor: default;
+  padding: 20px;
+}
+.upload-box.uploaded:hover { transform: none; }
+.upload-box.uploaded::before { display: none; }
+.upload-box.pcd.uploaded { border-color: rgba(59,130,246,0.4); background: rgba(59,130,246,0.04); }
+.upload-box.age.uploaded { border-color: rgba(6,182,212,0.4); background: rgba(6,182,212,0.04); }
+
+.file-pill {
+  display: none;
+  width: 100%; text-align: left;
+  position: relative; z-index: 1;
+}
+.uploaded .file-pill { display: block; }
+.uploaded .box-empty { display: none; }
+
+.file-pill-top {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.file-pill-check {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+  animation: checkPop 0.4s ease-out;
+}
+.pcd .file-pill-check { background: rgba(59,130,246,0.15); color: var(--accent); }
+.age .file-pill-check { background: var(--cyan-dim); color: var(--cyan); }
+
+.file-pill-info { flex: 1; min-width: 0; }
+.file-pill-name {
+  font-weight: 600; font-size: 13px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.file-pill-meta { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+
+.file-pill-remove {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--red-dim); border: none; color: var(--red);
+  cursor: pointer; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.file-pill-remove:hover { background: var(--red); color: white; }
+
+.file-pill-tag {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 4px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.pcd .file-pill-tag { background: rgba(59,130,246,0.12); color: var(--accent); }
+.age .file-pill-tag { background: var(--cyan-dim); color: var(--cyan); }
+
+/* Date section */
+.date-section {
+  display: none; animation: fadeSlideUp 0.4s ease-out;
+}
+.date-section.visible { display: block; }
+.date-section h3 {
+  font-size: 15px; font-weight: 600; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.date-field label {
+  display: block; font-size: 12px; font-weight: 500;
+  color: var(--text-dim); margin-bottom: 6px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.date-field input {
+  width: 100%; padding: 12px 16px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  transition: border-color 0.2s; outline: none;
+}
+.date-field input:focus { border-color: var(--accent); }
+
+/* Buttons */
+.btn-generate {
+  display: none; width: 100%; margin-top: 24px; padding: 16px;
+  background: linear-gradient(135deg, var(--accent), #2563eb);
+  border: none; border-radius: var(--radius-sm);
+  color: white; font-family: 'DM Sans', sans-serif;
+  font-size: 16px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.btn-generate.visible { display: block; }
+.btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--accent-glow); }
+.btn-generate:active { transform: translateY(0); }
+.btn-generate:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.btn-generate .btn-shimmer {
+  position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: shimmer 2.5s infinite;
+}
+
+/* Progress */
+.progress-container { display: none; margin-top: 20px; animation: fadeSlideUp 0.3s ease-out; }
+.progress-container.visible { display: block; }
+.progress-bar-track { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  border-radius: 3px; transition: width 0.4s ease;
+}
+.progress-text { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+
+/* Error */
+.error-msg {
+  background: var(--red-dim); border: 1px solid rgba(239,68,68,0.3);
+  border-radius: var(--radius-sm); padding: 14px 18px; margin-top: 16px;
+  font-size: 14px; color: #fca5a5;
+  display: none; animation: fadeSlideUp 0.3s ease-out;
+}
+.error-msg.visible { display: flex; align-items: center; gap: 10px; }
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════════════ */
+.dashboard-section { display: none; margin-top: 32px; animation: fadeSlideUp 0.6s ease-out; }
+.dashboard-section.visible { display: block; }
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.dashboard-header h2 { font-size: 24px; font-weight: 700; }
+.btn-download {
+  padding: 10px 24px; background: var(--green); border: none;
+  border-radius: var(--radius-sm); color: white;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-download:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
+
+.summary-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 28px;
+}
+.summary-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  transition: all 0.3s; animation: cardPop 0.5s ease-out both;
+}
+.summary-card:hover { border-color: rgba(59,130,246,0.3); transform: translateY(-3px); }
+.summary-card .label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.summary-card .value { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+.summary-card .change { font-size: 12px; margin-top: 4px; }
+
+.month-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+.month-tab {
+  padding: 8px 20px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 20px; color: var(--text-dim);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+}
+.month-tab:hover { border-color: var(--accent); color: var(--text); }
+.month-tab.active { background: var(--accent); border-color: var(--accent); color: white; font-weight: 600; }
+
+.section-group { margin-bottom: 24px; }
+.section-title {
+  font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 12px 16px; border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title.insurance { background: rgba(59,130,246,0.15); color: var(--accent); }
+.section-title.selfpay { background: rgba(59,130,246,0.12); color: #60a5fa; }
+.section-title.eps { background: var(--green-dim); color: var(--green); }
+.section-title.wcmva { background: var(--amber-dim); color: var(--amber); }
+.section-title.totals { background: var(--purple-dim); color: var(--purple); }
+
+.data-table {
+  width: 100%; border-collapse: separate; border-spacing: 0;
+  background: var(--surface); border: 1px solid var(--border); border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm); overflow: hidden;
+}
+.data-table th, .data-table td {
+  padding: 10px 16px; text-align: right; font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.data-table th {
+  background: var(--surface-2); font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-dim);
+}
+.data-table th:first-child, .data-table td:first-child { text-align: left; }
+.data-table tr { transition: background 0.15s; }
+.data-table tr:hover { background: var(--surface-2); }
+.data-table td:first-child { font-weight: 500; }
+.data-table tr:last-child td { border-bottom: none; }
+
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 32px; right: 32px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 20px;
+  font-size: 14px; z-index: 200;
+  transform: translateY(100px); opacity: 0;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .main-container { padding: 16px; }
+  .hero-text h1 { font-size: 24px; }
+  .date-row { grid-template-columns: 1fr; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+  .navbar { padding: 0 16px; }
+  .steps-bar { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-mesh"></div>
+
+<nav class="navbar">
+  <div class="navbar-brand">
+    <div class="icon">📊</div>
+    <span>Report Dashboard</span>
+  </div>
+  <div class="navbar-status">
+    <div class="status-dot"></div>
+    <span>Server Online</span>
+  </div>
+</nav>
+
+<div class="main-container">
+
+  <!-- UPLOAD SECTION -->
+  <div id="uploadSection">
+    <div class="hero-text">
+      <h1>Monthly Report Generator</h1>
+      <p>Upload your PCD_20 and Age_24 files separately — CSV or XLSX — we'll auto-detect everything</p>
+    </div>
+
+    <!-- Steps indicator -->
+    <div class="steps-bar" id="stepsBar">
+      <div class="step-item active" id="step1">
+        <span class="step-num">1</span> Upload Files
+      </div>
+      <div class="step-connector" id="conn1"></div>
+      <div class="step-item" id="step2">
+        <span class="step-num">2</span> Select Dates
+      </div>
+      <div class="step-connector" id="conn2"></div>
+      <div class="step-item" id="step3">
+        <span class="step-num">3</span> View Dashboard
+      </div>
+    </div>
+
+    <div class="card">
+      <!-- Two upload zones side by side -->
+      <div class="upload-grid">
+
+        <!-- PCD_20 Upload -->
+        <div class="upload-box pcd" id="pcdBox" onclick="triggerUpload('pcd')">
+          <div class="box-empty">
+            <div class="box-icon">📋</div>
+            <div class="box-label">PCD_20 File</div>
+            <div class="box-hint">.xlsx or .csv — Drop or click</div>
+          </div>
+          <div class="file-pill">
+            <div class="file-pill-top">
+              <div class="file-pill-check">✓</div>
+              <div class="file-pill-info">
+                <div class="file-pill-name" id="pcdFileName"></div>
+                <div class="file-pill-meta" id="pcdFileMeta"></div>
+              </div>
+              <button class="file-pill-remove" onclick="event.stopPropagation(); removeFile('pcd')" title="Remove">✕</button>
+            </div>
+            <span class="file-pill-tag" id="pcdTag">PCD_20</span>
+          </div>
+          <input type="file" id="pcdInput" accept=".xlsx,.xls,.csv">
+        </div>
+
+        <!-- Age_24 Upload -->
+        <div class="upload-box age" id="ageBox" onclick="triggerUpload('age')">
+          <div class="box-empty">
+            <div class="box-icon">📊</div>
+            <div class="box-label">Age_24 File</div>
+            <div class="box-hint">.xlsx or .csv — Drop or click</div>
+          </div>
+          <div class="file-pill">
+            <div class="file-pill-top">
+              <div class="file-pill-check">✓</div>
+              <div class="file-pill-info">
+                <div class="file-pill-name" id="ageFileName"></div>
+                <div class="file-pill-meta" id="ageFileMeta"></div>
+              </div>
+              <button class="file-pill-remove" onclick="event.stopPropagation(); removeFile('age')" title="Remove">✕</button>
+            </div>
+            <span class="file-pill-tag" id="ageTag">AGE_24</span>
+          </div>
+          <input type="file" id="ageInput" accept=".xlsx,.xls,.csv">
+        </div>
+      </div>
+
+      <div class="error-msg" id="errorMsg">
+        <span>⚠️</span>
+        <span id="errorText"></span>
+      </div>
+
+      <div class="date-section" id="dateSection">
+        <h3>📅 Select Date Range (filters PCD_20 Svc_Date)</h3>
+        <div class="date-row">
+          <div class="date-field">
+            <label>Start Month</label>
+            <input type="month" id="startDate">
+          </div>
+          <div class="date-field">
+            <label>End Month</label>
+            <input type="month" id="endDate">
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="btnGenerate" onclick="generateReport()">
+        <span class="btn-shimmer"></span>
+        Generate Dashboard Report
+      </button>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text">
+          <span id="progressLabel">Processing...</span>
+          <span id="progressPct">0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SECTION -->
+  <div class="dashboard-section" id="dashboardSection">
+    <div class="dashboard-header">
+      <h2>📊 Dashboard Report</h2>
+      <button class="btn-download" id="btnDownload" onclick="downloadReport()">⬇ Download Excel</button>
+    </div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="month-tabs" id="monthTabs"></div>
+    <div id="dashboardContent"></div>
+    <div style="text-align:center; margin-top:32px;">
+      <button class="btn-generate visible" onclick="resetAll()" style="max-width:300px; background: var(--surface-2); border: 1px solid var(--border);">
+        ← Generate Another Report
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
+const state = {
+  sessionId: null,
+  pcd: { filename: null, savedFilename: null, ready: false },
+  age: { filename: null, savedFilename: null, ready: false },
+  minDate: null, maxDate: null,
+  downloadFile: null,
+  metrics: null,
+  months: [],
+  activeMonth: null,
+};
+
+// ═══════════════════════════════════════
+//  DRAG & DROP + FILE INPUT
+// ═══════════════════════════════════════
+['pcdBox', 'ageBox'].forEach(id => {
+  const box = document.getElementById(id);
+  const type = id === 'pcdBox' ? 'pcd' : 'age';
+  ['dragenter','dragover'].forEach(e => box.addEventListener(e, ev => { ev.preventDefault(); box.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(e => box.addEventListener(e, ev => { ev.preventDefault(); box.classList.remove('drag-over'); }));
+  box.addEventListener('drop', ev => {
+    if (box.classList.contains('uploaded')) return;
+    const files = ev.dataTransfer.files;
+    if (files.length > 0) handleFile(files[0], type);
+  });
+});
+
+document.getElementById('pcdInput').addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0], 'pcd'); });
+document.getElementById('ageInput').addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0], 'age'); });
+
+function triggerUpload(type) {
+  const box = document.getElementById(type === 'pcd' ? 'pcdBox' : 'ageBox');
+  if (box.classList.contains('uploaded')) return;
+  document.getElementById(type === 'pcd' ? 'pcdInput' : 'ageInput').click();
+}
+
+// ═══════════════════════════════════════
+//  UPLOAD HANDLER
+// ═══════════════════════════════════════
+async function handleFile(file, expectedType) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+    showError('Unsupported format. Please upload .xlsx or .csv files only.');
+    return;
+  }
+  hideError();
+
+  const box = document.getElementById(expectedType === 'pcd' ? 'pcdBox' : 'ageBox');
+  const nameEl = document.getElementById(expectedType === 'pcd' ? 'pcdFileName' : 'ageFileName');
+  const metaEl = document.getElementById(expectedType === 'pcd' ? 'pcdFileMeta' : 'ageFileMeta');
+  const tagEl = document.getElementById(expectedType === 'pcd' ? 'pcdTag' : 'ageTag');
+
+  // Show uploading state
+  box.classList.add('uploaded');
+  nameEl.textContent = file.name;
+  metaEl.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB · Uploading...`;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  if (state.sessionId) formData.append('session_id', state.sessionId);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.error || 'Upload failed');
+      box.classList.remove('uploaded');
+      return;
+    }
+
+    state.sessionId = data.session_id;
+    const detectedType = data.detected_type; // 'pcd' or 'age'
+
+    // Check if detected type matches the box the user dropped into
+    if (detectedType !== expectedType) {
+      // Auto-correct: move to the right box
+      showToast(`Auto-detected as ${data.detected_label} — moved to the correct slot`);
+      box.classList.remove('uploaded');
+      applyUpload(detectedType, file, data);
+    } else {
+      applyUpload(expectedType, file, data);
+    }
+
+    checkBothReady();
+
+  } catch (err) {
+    showError('Network error during upload. Please try again.');
+    box.classList.remove('uploaded');
+  }
+}
+
+function applyUpload(type, file, data) {
+  const box = document.getElementById(type === 'pcd' ? 'pcdBox' : 'ageBox');
+  const nameEl = document.getElementById(type === 'pcd' ? 'pcdFileName' : 'ageFileName');
+  const metaEl = document.getElementById(type === 'pcd' ? 'pcdFileMeta' : 'ageFileMeta');
+  const tagEl = document.getElementById(type === 'pcd' ? 'pcdTag' : 'ageTag');
+
+  box.classList.add('uploaded');
+  nameEl.textContent = file.name;
+
+  const fmt = data.format;
+  if (type === 'pcd') {
+    metaEl.textContent = `${fmt} · ${data.total_rows.toLocaleString()} rows · Date range available`;
+    tagEl.textContent = `PCD_20 · ${fmt}`;
+    state.pcd = { filename: file.name, savedFilename: data.saved_filename, ready: true };
+    state.minDate = data.min_date;
+    state.maxDate = data.max_date;
+  } else {
+    metaEl.textContent = `${fmt} · ${data.total_rows.toLocaleString()} rows`;
+    tagEl.textContent = `AGE_24 · ${fmt}`;
+    state.age = { filename: file.name, savedFilename: data.saved_filename, ready: true };
+  }
+}
+
+function removeFile(type) {
+  const box = document.getElementById(type === 'pcd' ? 'pcdBox' : 'ageBox');
+  const input = document.getElementById(type === 'pcd' ? 'pcdInput' : 'ageInput');
+  box.classList.remove('uploaded');
+  input.value = '';
+  if (type === 'pcd') {
+    state.pcd = { filename: null, savedFilename: null, ready: false };
+    state.minDate = null; state.maxDate = null;
+  } else {
+    state.age = { filename: null, savedFilename: null, ready: false };
+  }
+  document.getElementById('dateSection').classList.remove('visible');
+  document.getElementById('btnGenerate').classList.remove('visible');
+  updateSteps();
+  hideError();
+}
+
+function checkBothReady() {
+  updateSteps();
+  if (state.pcd.ready && state.age.ready) {
+    // Show date picker
+    const startInput = document.getElementById('startDate');
+    const endInput = document.getElementById('endDate');
+    if (state.minDate && state.maxDate) {
+      const minD = new Date(state.minDate);
+      const maxD = new Date(state.maxDate);
+      const minVal = `${minD.getFullYear()}-${String(minD.getMonth()+1).padStart(2,'0')}`;
+      const maxVal = `${maxD.getFullYear()}-${String(maxD.getMonth()+1).padStart(2,'0')}`;
+      startInput.value = minVal;
+      endInput.value = maxVal;
+      startInput.min = minVal; startInput.max = maxVal;
+      endInput.min = minVal; endInput.max = maxVal;
+    }
+    document.getElementById('dateSection').classList.add('visible');
+    document.getElementById('btnGenerate').classList.add('visible');
+    showToast('✓ Both files uploaded — select your date range');
+  }
+}
+
+function updateSteps() {
+  const s1 = document.getElementById('step1');
+  const s2 = document.getElementById('step2');
+  const s3 = document.getElementById('step3');
+  const c1 = document.getElementById('conn1');
+  const c2 = document.getElementById('conn2');
+
+  // Step 1
+  if (state.pcd.ready && state.age.ready) {
+    s1.className = 'step-item done'; c1.className = 'step-connector done';
+    s2.className = 'step-item active';
+  } else {
+    s1.className = 'step-item active'; c1.className = 'step-connector';
+    s2.className = 'step-item'; s3.className = 'step-item';
+    c2.className = 'step-connector';
+  }
+}
+
+// ═══════════════════════════════════════
+//  REPORT GENERATION
+// ═══════════════════════════════════════
+async function generateReport() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal = document.getElementById('endDate').value;
+  if (!startVal || !endVal) { showError('Please select both start and end dates'); return; }
+
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  hideError();
+
+  const prog = document.getElementById('progressContainer');
+  prog.classList.add('visible');
+  animateProgress(0, 90, 4000);
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: state.sessionId,
+        start_date: startVal + '-01',
+        end_date: endVal + '-01',
+        pcd_filename: state.pcd.savedFilename,
+        age_filename: state.age.savedFilename,
+      }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError(data.error || 'Generation failed');
+      btn.disabled = false;
+      btn.innerHTML = '<span class="btn-shimmer"></span> Generate Dashboard Report';
+      prog.classList.remove('visible');
+      return;
+    }
+
+    animateProgress(90, 100, 300);
+    state.metrics = data.metrics;
+    state.months = data.months;
+    state.downloadFile = data.download_file;
+    state.activeMonth = data.months.length > 0 ? data.months[data.months.length - 1] : null;
+
+    // Update steps
+    document.getElementById('step2').className = 'step-item done';
+    document.getElementById('conn2').className = 'step-connector done';
+    document.getElementById('step3').className = 'step-item done';
+
+    setTimeout(() => {
+      renderDashboard();
+      document.getElementById('uploadSection').style.display = 'none';
+      document.getElementById('dashboardSection').classList.add('visible');
+      showToast(`✓ Report generated — ${data.num_months} month(s) processed`);
+      btn.disabled = false;
+      btn.innerHTML = '<span class="btn-shimmer"></span> Generate Dashboard Report';
+      prog.classList.remove('visible');
+    }, 400);
+  } catch (err) {
+    showError('Network error. Please try again.');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-shimmer"></span> Generate Dashboard Report';
+    prog.classList.remove('visible');
+  }
+}
+
+function animateProgress(from, to, duration) {
+  const fill = document.getElementById('progressFill');
+  const pctEl = document.getElementById('progressPct');
+  const labelEl = document.getElementById('progressLabel');
+  const steps = ['Reading files...', 'Processing data...', 'Computing metrics...', 'Building dashboard...'];
+  let start = null;
+  function tick(ts) {
+    if (!start) start = ts;
+    const elapsed = ts - start;
+    const pct = Math.min(from + (to - from) * (elapsed / duration), to);
+    fill.style.width = pct + '%';
+    pctEl.textContent = Math.round(pct) + '%';
+    labelEl.textContent = steps[Math.min(Math.floor(pct / 25), 3)];
+    if (elapsed < duration) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function resetAll() {
+  document.getElementById('dashboardSection').classList.remove('visible');
+  document.getElementById('uploadSection').style.display = '';
+  removeFile('pcd'); removeFile('age');
+  state.sessionId = null; state.downloadFile = null;
+  state.metrics = null; state.months = []; state.activeMonth = null;
+  updateSteps();
+}
+
+// ═══════════════════════════════════════
+//  DASHBOARD RENDERING
+// ═══════════════════════════════════════
+const SECTION_DEFS = [
+  { id:'insurance', title:'Insurance', cls:'insurance', icon:'🏥',
+    keys:['ins_charges','ins_visits','ins_avg_charge','ins_paid_closed','ins_no_payment',
+          'ins_partial','ins_patient_balance','ins_credit_balance','ins_primary_paid_pct',
+          'ins_net_collection','ins_contractual_adj','ins_avg_collection'],
+    labels:['Charges','# Visit','Avg Charge/Visit','Paid & Closed','No Payment Visit',
+            'Partially Paid','Patient Balance','Credit Balance','Primary Paid %',
+            'Net Collection','Contractual Adj','Avg Collection/Visit'] },
+  { id:'selfpay', title:'Self Pay', cls:'selfpay', icon:'💳',
+    keys:['sp_charges','sp_visits','sp_avg_charge','sp_net_collection','sp_contractual_adj'],
+    labels:['Charges','# Visit','Avg Charge/Visit','Net Collection','Contractual Adj'] },
+  { id:'eps', title:'EPS', cls:'eps', icon:'📋',
+    keys:['eps_charges','eps_visits','eps_avg_charge','eps_net_collection','eps_contractual_adj'],
+    labels:['Charges','# Visit','Avg Charge/Visit','Net Collection','Contractual Adj'] },
+  { id:'wcmva', title:'WC & MVA', cls:'wcmva', icon:'⚠️',
+    keys:['wc_charges','wc_visits','wc_avg_charge','wc_net_collection','wc_contractual_adj'],
+    labels:['Charges','# Visit','Avg Charge/Visit','Net Collection','Contractual Adj'] },
+  { id:'totals', title:'Totals', cls:'totals', icon:'📈',
+    keys:['total_charges','total_visits','total_payments','total_adjustments','gcr_pct','ncr_pct'],
+    labels:['Total Charges','Total Visits','Total Payments','Total Adjustments','GCR%','NCR%'] },
+];
+
+function renderDashboard() {
+  renderMonthTabs(); renderSummaryCards(); renderDataTables();
+}
+
+function renderMonthTabs() {
+  const c = document.getElementById('monthTabs');
+  let h = `<div class="month-tab ${!state.activeMonth ? 'active' : ''}" onclick="switchMonth(null)">All Months</div>`;
+  state.months.forEach(m => {
+    h += `<div class="month-tab ${state.activeMonth===m?'active':''}" onclick="switchMonth('${m}')">${m}</div>`;
+  });
+  c.innerHTML = h;
+}
+
+function switchMonth(m) { state.activeMonth = m; renderMonthTabs(); renderSummaryCards(); renderDataTables(); }
+
+function renderSummaryCards() {
+  const grid = document.getElementById('summaryGrid');
+  const m = state.activeMonth || state.months[state.months.length-1];
+  const metrics = state.metrics[m];
+  const cards = [
+    { label:'Total Charges', key:'total_charges', color:'var(--accent)' },
+    { label:'Total Visits', key:'total_visits', color:'var(--purple)' },
+    { label:'Total Payments', key:'total_payments', color:'var(--green)' },
+    { label:'GCR', key:'gcr_pct', color:'var(--amber)' },
+    { label:'NCR', key:'ncr_pct', color:'var(--red)' },
+  ];
+  let h = '';
+  cards.forEach((c,i) => {
+    const val = metrics[c.key];
+    h += `<div class="summary-card" style="animation-delay:${i*0.08}s; border-top:3px solid ${c.color}">
+      <div class="label">${c.label}</div>
+      <div class="value" style="color:${c.color}">${val?val.display:'—'}</div>
+      <div class="change" style="color:var(--text-dim)">${m}</div></div>`;
+  });
+  grid.innerHTML = h;
+}
+
+function renderDataTables() {
+  const container = document.getElementById('dashboardContent');
+  let h = '';
+  SECTION_DEFS.forEach((sec,si) => {
+    h += `<div class="section-group" style="animation:fadeSlideUp 0.5s ease-out ${si*0.1}s both">`;
+    h += `<div class="section-title ${sec.cls}">${sec.icon} ${sec.title}</div>`;
+    h += `<div class="table-scroll"><table class="data-table"><thead><tr><th>Metric</th>`;
+    if (!state.activeMonth) { state.months.forEach(m => { h += `<th>${m}</th>`; }); }
+    else { h += `<th>${state.activeMonth}</th>`; }
+    h += '</tr></thead><tbody>';
+    sec.keys.forEach((key,ki) => {
+      h += `<tr><td>${sec.labels[ki]}</td>`;
+      if (!state.activeMonth) {
+        state.months.forEach(m => { const v = state.metrics[m][key]; h += `<td>${v?v.display:'—'}</td>`; });
+      } else {
+        const v = state.metrics[state.activeMonth][key]; h += `<td>${v?v.display:'—'}</td>`;
+      }
+      h += '</tr>';
+    });
+    h += '</tbody></table></div></div>';
+  });
+  container.innerHTML = h;
+}
+
+function downloadReport() {
+  if (state.downloadFile) { window.open(`/api/download/${state.downloadFile}`, '_blank'); showToast('⬇ Download started'); }
+}
+
+// ═══════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════
+function showError(msg) { document.getElementById('errorText').textContent = msg; document.getElementById('errorMsg').classList.add('visible'); }
+function hideError() { document.getElementById('errorMsg').classList.remove('visible'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
